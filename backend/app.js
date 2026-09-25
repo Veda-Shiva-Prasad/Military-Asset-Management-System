@@ -8,6 +8,7 @@ const transferRoutes = require("./routes/transferRoutes");
 const assignmentRoutes = require("./routes/assignmentRoutes");
 const expenditureRoutes = require("./routes/expenditureRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const auditRoutes = require("./routes/auditRoutes");
 const app = express();
 
 app.use(cors());
@@ -25,5 +26,6 @@ app.use("/api/transfers", transferRoutes);
 app.use("/api/assignments", assignmentRoutes);
 app.use("/api/expenditures", expenditureRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/audit-logs", auditRoutes);
 
 module.exports = app;
