@@ -19,6 +19,26 @@ const createPurchase = async (req, res) => {
       });
     }
 
+    // Base Commanders can record purchases only for their assigned base.
+    if (
+      req.user.role === "BASE_COMMANDER" &&
+      Number(baseId) !== Number(req.user.baseId)
+    ) {
+      return res.status(403).json({
+        message: "You can record purchases only for your assigned base",
+      });
+    }
+
+    // Logistics Officers can record purchases only for their assigned base.
+    if (
+      req.user.role === "LOGISTICS_OFFICER" &&
+      Number(baseId) !== Number(req.user.baseId)
+    ) {
+      return res.status(403).json({
+        message: "You can record purchases only for your assigned base",
+      });
+    }
+
     const base = await Base.findByPk(baseId);
     const equipment = await EquipmentType.findByPk(equipmentTypeId);
 
@@ -59,7 +79,20 @@ const createPurchase = async (req, res) => {
 
 const getPurchases = async (req, res) => {
   try {
+    const where = {};
+
+    // Base Commanders and Logistics Officers can view
+    // purchases only for their assigned base.
+    if (
+      req.user.role === "BASE_COMMANDER" ||
+      req.user.role === "LOGISTICS_OFFICER"
+    ) {
+      where.baseId = req.user.baseId;
+    }
+
     const purchases = await Purchase.findAll({
+      where,
+
       include: [
         {
           model: Base,
@@ -70,6 +103,7 @@ const getPurchases = async (req, res) => {
           attributes: ["id", "name"],
         },
       ],
+
       order: [["purchaseDate", "DESC"]],
     });
 

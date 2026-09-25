@@ -1,6 +1,6 @@
 const { Assignment, Base, EquipmentType } = require("../models");
-
 const createAuditLog = require("../utils/auditLogger");
+const { getAvailableStock } = require("../utils/inventory");
 
 const createAssignment = async (req, res) => {
   try {
@@ -19,12 +19,31 @@ const createAssignment = async (req, res) => {
       });
     }
 
+    // Base Commanders can assign assets only from their assigned base.
+    if (
+      req.user.role === "BASE_COMMANDER" &&
+      Number(baseId) !== Number(req.user.baseId)
+    ) {
+      return res.status(403).json({
+        message: "You can assign assets only from your assigned base",
+      });
+    }
+
     const base = await Base.findByPk(baseId);
     const equipment = await EquipmentType.findByPk(equipmentTypeId);
 
     if (!base || !equipment) {
       return res.status(404).json({
         message: "Base or equipment type not found",
+      });
+    }
+
+    // Check available inventory before assignment.
+    const availableStock = await getAvailableStock(baseId, equipmentTypeId);
+
+    if (quantity > availableStock) {
+      return res.status(400).json({
+        message: `Insufficient stock. Available quantity: ${availableStock}`,
       });
     }
 
@@ -58,7 +77,20 @@ const createAssignment = async (req, res) => {
 
 const getAssignments = async (req, res) => {
   try {
+    const where = {};
+
+    // Base Commanders and Logistics Officers can view
+    // assignments only for their assigned base.
+    if (
+      req.user.role === "BASE_COMMANDER" ||
+      req.user.role === "LOGISTICS_OFFICER"
+    ) {
+      where.baseId = req.user.baseId;
+    }
+
     const assignments = await Assignment.findAll({
+      where,
+
       include: [
         {
           model: Base,
@@ -69,6 +101,7 @@ const getAssignments = async (req, res) => {
           attributes: ["id", "name"],
         },
       ],
+
       order: [["assignmentDate", "DESC"]],
     });
 
