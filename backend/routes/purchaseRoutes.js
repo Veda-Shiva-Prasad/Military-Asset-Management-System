@@ -14,7 +14,7 @@ const router = express.Router();
 router.post(
   "/",
   authenticate,
-  authorize("ADMIN", "LOGISTICS_OFFICER"),
+  authorize("ADMIN", "BASE_COMMANDER", "LOGISTICS_OFFICER"),
   createPurchase,
 );
 

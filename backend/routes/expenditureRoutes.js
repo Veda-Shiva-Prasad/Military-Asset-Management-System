@@ -22,7 +22,7 @@ router.post(
 router.get(
   "/",
   authenticate,
-  authorize("ADMIN", "BASE_COMMANDER", "LOGISTICS_OFFICER"),
+  authorize("ADMIN", "BASE_COMMANDER"),
   getExpenditures,
 );
 
